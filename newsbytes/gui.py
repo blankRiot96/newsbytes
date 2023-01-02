@@ -2,20 +2,21 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
     QWidget,
 )
-from PySide6.QtWidgets import QLayout
-
-from .color import Color
+from .states import State
+from . import homepage
 from . import the_hindus
-from . import india_today
-from . import times_of_india
 from loguru import logger
 
 logger.add("newsbytes.log", rotation="5 KB")
+
+
+def clear_layout(layout):
+    while layout.count():
+        child = layout.takeAt(0)
+        if child.widget():
+            child.widget().deleteLater()
 
 
 class GUI(QMainWindow):
@@ -27,24 +28,24 @@ class GUI(QMainWindow):
         self.setWindowTitle("News Bytes")
         self.setFixedSize(QSize(*GUI.DEFAULT_WIN_SIZE))
 
-        news_buttons_layout = QVBoxLayout()
-        news_buttons_layout.addWidget(the_hindus.goto_button())
-        news_buttons_layout.addWidget(india_today.goto_button())
+        self.state = None
+        self.widget = QWidget()
+        self.switch_state(State.HOMEPAGE)
 
-        colors_layout = QVBoxLayout()
-        colors_layout.addWidget(Color("orange", GUI.COLOR_CONTENT_SIZE))
-        colors_layout.addWidget(Color("white", GUI.COLOR_CONTENT_SIZE))
-        colors_layout.addWidget(Color("green", GUI.COLOR_CONTENT_SIZE))
-
-        final_layout = QHBoxLayout()
-        final_layout.addLayout(news_buttons_layout)
-        final_layout.addLayout(colors_layout)
-
-        widget = QWidget()
-        widget.setLayout(final_layout)
-
-        self.setCentralWidget(widget)
+        self.setCentralWidget(self.widget)
         logger.info("Initialized window")
+
+    def switch_state(self, state: State) -> None:
+        self.state = state
+
+        if self.widget.layout() is not None:
+            clear_layout(self.widget.layout())
+
+        if self.state == State.HOMEPAGE:
+            self.widget.setLayout(homepage.get_homepage_layout(self))
+        elif self.state == State.THE_HINDUS:
+            self.widget.setLayout(the_hindus.get_homepage_layout())
+        logger.info(f"Switched state to: {state}")
 
 
 def main():
