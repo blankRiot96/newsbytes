@@ -15,7 +15,7 @@ from . import india_today
 from . import times_of_india
 from loguru import logger
 
-logger.add("newsbytes.log", retention="3 days")
+logger.add("newsbytes.log", rotation="5 KB")
 
 
 class GUI(QMainWindow):
