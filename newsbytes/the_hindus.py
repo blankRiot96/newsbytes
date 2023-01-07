@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QPushButton, QVBoxLayout, QLabel
 from PySide6.QtGui import QIcon, QImage
 from .states import State
 from loguru import logger
+from .color import Color
 
 URL = "https://www.thehindu.com/news/national/"
 LOGO = "assets/thehindu-logo.svg"
@@ -58,6 +59,8 @@ def get_article_ui(url: str) -> QVBoxLayout:
             continue
         img_label.setPixmap(QImage(img_bytes.content))
         layout.addWidget(img_label)
+
+    layout.addWidget(Color("blue", (400, 32)))
     return layout
 
 

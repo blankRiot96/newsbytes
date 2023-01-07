@@ -5,20 +5,15 @@ from PySide6.QtWidgets import (
     QWidget,
     QStackedWidget,
     QScrollArea,
+    QHBoxLayout,
 )
 from .states import State
 from . import homepage
 from . import the_hindus
 from loguru import logger
+from .color import Color
 
 logger.add("newsbytes.log", rotation="5 KB")
-
-
-def clear_layout(layout):
-    while layout.count():
-        child = layout.takeAt(0)
-        if child.widget():
-            child.widget().deleteLater()
 
 
 class GUI(QMainWindow):
@@ -34,8 +29,11 @@ class GUI(QMainWindow):
         self.widget = QStackedWidget()
 
         self.create_content_widgets()
-        self.widget.addWidget(self.homepage_widget)
-        self.widget.addWidget(self.the_hindus_widget)
+        self.state_tree = {
+            State.HOMEPAGE: self.homepage_widget,
+            State.THE_HINDUS: self.the_hindus_widget,
+        }
+        self.prev_widget = None
         self.switch_state(State.HOMEPAGE)
 
         self.setCentralWidget(self.widget)
@@ -49,8 +47,10 @@ class GUI(QMainWindow):
 
     def switch_state(self, state: State) -> None:
         self.state = state
+        self.widget.removeWidget(self.prev_widget)
 
-        self.widget.setCurrentIndex(state.value)
+        self.widget.addWidget(self.state_tree[state])
+        self.prev_widget = self.state_tree[state]
         logger.info(f"Switched state to: {state}")
 
 
