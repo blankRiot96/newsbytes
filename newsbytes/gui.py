@@ -3,6 +3,8 @@ from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
+    QStackedWidget,
+    QScrollArea,
 )
 from .states import State
 from . import homepage
@@ -29,22 +31,26 @@ class GUI(QMainWindow):
         self.setFixedSize(QSize(*GUI.DEFAULT_WIN_SIZE))
 
         self.state = None
-        self.widget = QWidget()
+        self.widget = QStackedWidget()
+
+        self.create_content_widgets()
+        self.widget.addWidget(self.homepage_widget)
+        self.widget.addWidget(self.the_hindus_widget)
         self.switch_state(State.HOMEPAGE)
 
         self.setCentralWidget(self.widget)
         logger.info("Initialized window")
 
+    def create_content_widgets(self) -> None:
+        self.homepage_widget = QScrollArea()
+        self.the_hindus_widget = QScrollArea()
+        self.homepage_widget.setLayout(homepage.get_homepage_layout(self))
+        self.the_hindus_widget.setLayout(the_hindus.get_homepage_layout(3))
+
     def switch_state(self, state: State) -> None:
         self.state = state
 
-        if self.widget.layout() is not None:
-            clear_layout(self.widget.layout())
-
-        if self.state == State.HOMEPAGE:
-            self.widget.setLayout(homepage.get_homepage_layout(self))
-        elif self.state == State.THE_HINDUS:
-            self.widget.setLayout(the_hindus.get_homepage_layout())
+        self.widget.setCurrentIndex(state.value)
         logger.info(f"Switched state to: {state}")
 
 
