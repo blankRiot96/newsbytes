@@ -1,10 +1,11 @@
 from bs4 import BeautifulSoup
 import requests
-from PySide6.QtWidgets import QPushButton, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QPushButton, QVBoxLayout, QLabel, QSpacerItem
 from PySide6.QtGui import QIcon, QImage
 from .states import State
 from loguru import logger
 from .color import Color
+from typing import Iterator
 
 URL = "https://www.thehindu.com/news/national/"
 LOGO = "assets/thehindu-logo.svg"
@@ -38,27 +39,26 @@ def scrape_links(n_articles: int) -> list[str]:
     return links
 
 
+def scrape_all_text(url_soup: BeautifulSoup) -> Iterator:
+    for para in url_soup.find_all("p"):
+        yield para.getText()
+
+
 def get_article_ui(url: str) -> QVBoxLayout:
     r = requests.get(url)
+    logger.debug(url)
     url_soup = BeautifulSoup(r.content, "html.parser")
     layout = QVBoxLayout()
+    layout.addSpacing(0)
 
-    img_soups = url_soup.find_all("img")
-    img_soups = img_soups[:MAX_IMAGES_PER_ARTICLE]
-    for i, img_soup in enumerate(img_soups):
-        if i == 1:
+    for story in url_soup.find_all("a"):
+        if story.get("href") is None or not story.get("href").startswith(url):
             continue
-        try:
-            img_bytes = requests.get(img_soup.get("src"))
-        except:
-            continue
-        logger.info(img_bytes.content)
-        img_label = QLabel()
-        q_img = QImage(img_bytes.content)
-        if q_img.isNull:
-            continue
-        img_label.setPixmap(QImage(img_bytes.content))
-        layout.addWidget(img_label)
+
+        story_req = requests.get(story.get("href"))
+        story_soup = BeautifulSoup(story_req.content, "html.parser")
+        for text in scrape_all_text(story_soup):
+            layout.addWidget(QLabel(text=text))
 
     layout.addWidget(Color("blue", (400, 32)))
     return layout
@@ -66,6 +66,7 @@ def get_article_ui(url: str) -> QVBoxLayout:
 
 def get_homepage_layout(n_articles: int) -> QVBoxLayout:
     layout = QVBoxLayout()
+    layout.addSpacing(0)
     links = scrape_links(n_articles)
 
     for link in links:
